@@ -1,5 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import "./App.css";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Box,
   checkCollision,
@@ -12,22 +11,25 @@ import {
 function App() {
   const appRef = useRef(null);
   const [areas, setAreas] = useState<Box[]>([]);
-  const [boxes] = useState<Box[]>([
+  const [boxes, setBoxes] = useState<Box[]>([
     {
       width: 50,
       height: 100,
-      x: 200,
+      x: 25,
       y: 150,
     },
     {
       width: 100,
       height: 100,
-      x: 50,
-      y: 250,
+      x: 275,
+      y: 150,
     },
   ]);
 
-  useLayoutEffect(() => {
+  const [itemIndex, setItemIndex] = useState(0);
+  const [dragEnabled, setDragEnabled] = useState(false);
+
+  const compute = () => {
     if (!appRef.current) {
       return;
     }
@@ -51,10 +53,10 @@ function App() {
 
     const layersX = getXLayers(base, layersBase);
 
-    console.log(layersX);
+    console.log("x layers", layersX);
 
     const layersY = getYLayers(base, layersBase);
-    console.log(layersY);
+    console.log("y layers", layersY);
 
     const areas: Box[] = [];
     for (const [l, r] of layersX) {
@@ -66,7 +68,11 @@ function App() {
           height: b - t,
         };
 
-        if (!checkCollision(box, layersBase)) {
+        const collided = checkCollision(box, layersBase);
+
+        console.log("box", collided, box);
+
+        if (!collided) {
           areas.push({
             ...box,
             x: box.x + mainData.x,
@@ -76,7 +82,7 @@ function App() {
       }
     }
 
-    console.log(areas);
+    console.log("areas", areas);
     // setAreas(areas);
 
     let largestArea = 0;
@@ -89,10 +95,52 @@ function App() {
       }
     }
 
-    console.log(boxArea);
+    // x: 25, width: 275,
+    // y: 0, height: 300,
+    console.log("selected area", boxArea);
     setAreas([boxArea]);
+  };
+
+  useLayoutEffect(() => {
+    compute();
     // const
   }, [appRef]);
+
+  useEffect(() => {
+    if (dragEnabled) {
+      const mousemove = (event: any) => {
+        setBoxes(
+          boxes.map((dimension, index) => {
+            if (index !== itemIndex) {
+              return dimension;
+            }
+
+            return {
+              ...dimension,
+              x: event.clientX,
+              y: event.clientY,
+            };
+          })
+        );
+      };
+
+      const mouseup = () => {
+        compute();
+        setDragEnabled(false);
+        document.removeEventListener("mousemove", mousemove);
+      };
+
+      document.addEventListener("mouseup", mouseup);
+      document.addEventListener("mousemove", mousemove);
+
+      return () => {
+        document.removeEventListener("mouseup", mouseup);
+        document.removeEventListener("mousemove", mousemove);
+      };
+    }
+  }, [dragEnabled]);
+
+  console.log(boxes);
 
   return (
     <div className="App" ref={appRef}>
@@ -107,6 +155,10 @@ function App() {
             top: `${box.y}px`,
             width: `${box.width}px`,
             height: `${box.height}px`,
+          }}
+          onMouseDown={(event) => {
+            setDragEnabled(true);
+            setItemIndex(i);
           }}
         />
       ))}
