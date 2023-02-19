@@ -31,7 +31,7 @@ export function transformBase(main: Dimension, box: Dimension): Dimension {
 }
 
 export function checkCollision(box: Box, layers: Dimension[]) {
-  return layers.find((layer) => {
+  return !!layers.find((layer) => {
     return (
       box.x < layer.x + layer.width &&
       box.x + box.width > layer.x &&
@@ -42,16 +42,23 @@ export function checkCollision(box: Box, layers: Dimension[]) {
 }
 
 export function getXLayers(base: Dimension, list: Dimension[]) {
-  const layersX = [[0, base.width]];
+  const layersX = [[0, base.right]];
   // main
   for (const box of list) {
+    // is edge
     if (box.x > 0) {
       layersX.push([0, box.x]);
+
+      for (const item of list) {
+        if (item !== box && item.right < box.x) {
+          layersX.push([item.right, box.x]);
+        }
+      }
     }
   }
 
   for (const box of list) {
-    if (box.right < base.right) {
+    if (box.right > 0 && box.right < base.right) {
       layersX.push([box.right, base.right]);
     }
   }
@@ -65,11 +72,17 @@ export function getYLayers(base: Dimension, list: Dimension[]) {
   for (const box of list) {
     if (box.y > 0) {
       layersY.push([0, box.y]);
+
+      for (const item of list) {
+        if (item !== box && item.bottom < box.y) {
+          layersY.push([item.bottom, box.y]);
+        }
+      }
     }
   }
 
   for (const box of list) {
-    if (box.bottom < base.bottom) {
+    if (box.bottom > 0 && box.bottom < base.bottom) {
       layersY.push([box.bottom, base.bottom]);
     }
   }
