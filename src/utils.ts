@@ -46,7 +46,7 @@ export function getXLayers(base: Dimension, list: Dimension[]) {
   // main
   for (const box of list) {
     // is edge
-    if (box.x > 0) {
+    if (box.x > 0 && box.x < base.right) {
       layersX.push([0, box.x]);
 
       for (const item of list) {
@@ -70,11 +70,12 @@ export function getYLayers(base: Dimension, list: Dimension[]) {
   const layersY = [[0, base.height]];
   // main
   for (const box of list) {
-    if (box.y > 0) {
+    if (box.y > 0 && box.y < base.bottom) {
       layersY.push([0, box.y]);
 
       for (const item of list) {
         if (item !== box && item.bottom < box.y) {
+          console.log("add extra", item.bottom, box.y, base.bottom);
           layersY.push([item.bottom, box.y]);
         }
       }
